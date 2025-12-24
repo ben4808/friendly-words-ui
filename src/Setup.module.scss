@@ -1,0 +1,392 @@
+@use 'sass:color';
+
+// Dark theme variables
+$bg-primary: #1a1a1a;
+$bg-secondary: #2a2a2a;
+$bg-tertiary: #3a3a3a;
+$text-primary: #ffffff;
+$text-secondary: #cccccc;
+$text-muted: #888888;
+$border-color: #404040;
+$blue-accent: #4a9eff;
+$blue-hover: #3a8ae0;
+$blue-disabled: #2a6aa0;
+$danger: #ff6b6b;
+$danger-hover: #e55a5a;
+
+.setup {
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: linear-gradient(135deg, $bg-primary 0%, $bg-secondary 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: $text-primary;
+  margin-bottom: 3rem;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.section {
+  background: $bg-secondary;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid $border-color;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: 400px;
+  max-width: 600px;
+}
+
+.wordListSection {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem 2rem;
+
+  .sectionTitle {
+    margin-bottom: 0;
+    margin-right: auto;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  .fileInput {
+    flex: 1;
+    max-width: 300px;
+  }
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: 1.5rem;
+  margin-top: 0;
+  text-align: center;
+}
+
+// File input styles
+.fileInput {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.fileInputField {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.fileInputLabel {
+  display: block;
+  padding: 1rem 1.5rem;
+  background: $bg-tertiary;
+  border: 2px dashed $border-color;
+  border-radius: 8px;
+  color: $text-secondary;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+
+  &:hover {
+    border-color: $blue-accent;
+    background: color.scale($bg-tertiary, $lightness: 5%);
+    color: $text-primary;
+  }
+
+  &.fileInputLabelError {
+    border-color: $danger;
+    background: color.scale($bg-tertiary, $lightness: -10%);
+    color: $danger;
+  }
+}
+
+.errorMessage {
+  margin-top: 0.5rem;
+  color: $danger;
+  font-size: 0.875rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+// Players section
+.playersList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.playerInput {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.playerNameInput {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: $bg-primary;
+  border: 2px solid $border-color;
+  border-radius: 8px;
+  color: $text-primary;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: $blue-accent;
+    box-shadow: 0 0 0 3px rgba($blue-accent, 0.2);
+  }
+
+  &::placeholder {
+    color: $text-muted;
+  }
+}
+
+.removePlayerButton {
+  width: 40px;
+  height: 40px;
+  background: $danger;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: $danger-hover;
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.addPlayerButton {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background: $blue-accent;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: $blue-hover;
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    background: $blue-disabled;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.startGameButton {
+  padding: 1rem 2rem;
+  background: $blue-accent;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba($blue-accent, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &:hover:not(:disabled) {
+    background: $blue-hover;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba($blue-accent, 0.4);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    background: $blue-disabled;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .setup {
+    padding: 1rem;
+    height: auto;
+    min-height: 100vh;
+    position: static;
+  }
+
+  .title {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .section {
+    padding: 1.5rem;
+    min-width: unset;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .wordListSection {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1.5rem;
+
+    .sectionTitle {
+      margin-bottom: 0;
+      margin-right: 0;
+      text-align: center;
+    }
+
+    .fileInput {
+      max-width: 100%;
+    }
+  }
+
+  .sectionTitle {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .fileInputLabel {
+    padding: 1.25rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .playersList {
+    gap: 0.75rem;
+  }
+
+  .playerInput {
+    gap: 0.5rem;
+  }
+
+  .playerNameInput {
+    padding: 1rem;
+    font-size: 1rem;
+    min-height: 48px; // Touch-friendly size
+  }
+
+  .removePlayerButton {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+    min-width: 44px; // Minimum touch target
+    min-height: 44px;
+  }
+
+  .addPlayerButton {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    min-height: 48px; // Touch-friendly size
+  }
+
+  .startGameButton {
+    padding: 1.25rem 2rem;
+    font-size: 1.1rem;
+    width: 100%;
+    max-width: 300px;
+    min-height: 56px; // Touch-friendly size
+  }
+}
+
+// Extra small screens (phones)
+@media (max-width: 480px) {
+  .setup {
+    padding: 0.75rem;
+  }
+
+  .title {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .section {
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .wordListSection {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1.25rem;
+
+    .sectionTitle {
+      margin-bottom: 0;
+      margin-right: 0;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+    .fileInput {
+      max-width: 100%;
+    }
+  }
+
+  .sectionTitle {
+    font-size: 1.1rem;
+  }
+
+  .fileInputLabel {
+    padding: 1rem;
+    font-size: 0.85rem;
+  }
+
+  .playerNameInput {
+    padding: 0.875rem;
+    font-size: 0.95rem;
+  }
+
+  .addPlayerButton {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.95rem;
+  }
+
+  .startGameButton {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+  }
+}
