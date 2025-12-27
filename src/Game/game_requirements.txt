@@ -1,0 +1,58 @@
+STYLING & UI
+Theme: Dark Mode (Grays with Blue accent colors).
+Implementation: SCSS Modules only (no Tailwind or external CSS frameworks).
+Responsiveness: Fully responsive layout for Mobile and Desktop.
+
+Layout Order:
+15x15 Game Board, on desktop on the left, full height, on mobile on the top, full width
+Player Scoreboard (2-4 players side-by-side, Name above Score). On Desktop, top of right side, on Mobile, below board.
+Interaction Area (Turn Gate, Tile Rack, and Action Buttons). Below player scoreboard.
+
+DATA & STATE MANAGEMENT
+Props: Receives an array of player objects.
+Context: Dictionary data (word-to-multiplier mapping) provided via React Context.
+Initialization: Starting player is selected randomly at the beginning of the game.
+Tile Pool: Standard Scrabble distribution. Racks are refilled to 7 tiles from the pool upon turn completion.
+
+BOARD & INPUT LOGIC
+Board Grid: 15x15 squares with standard bonus colors (DL, TL, DW, TW).
+
+Interaction:
+Click 1 on a square: Selects square and sets direction to "Across".
+Click 2 on the same square: Toggles direction to "Down".
+UI Indicator: A triangular arrow displays at the active square showing direction.
+
+Tile Placement:
+Keyboard: Typing a letter places it if it exists in the rack.
+Click: Clicking a tile in the rack places it into the active board square.
+Auto-advance: The cursor advances in the active direction after a tile is placed.
+
+Blank Tiles:
+Used automatically if the typed letter is missing from the rack but a blank is available.
+If clicked manually in the rack, a prompt allows the user to designate the letter.
+Visuals: Blanks show the designated letter in light gray with no point value.
+
+TURN FLOW & MECHANICS
+Turn Gate: Before a rack is shown, display "[Player Name] Ready?" and a "Ready" button.
+
+Exchange Mode:
+Activated via "Exchange" button.
+UI Toggle: "Submit" becomes "Confirm Exchange"; "Exchange" becomes "Cancel".
+User selects tiles to return to the pool and receives new ones.
+
+Validation:
+Real-time check: Every placement triggers a dictionary and connectivity check.
+Connectivity: Words must connect to existing tiles (except the first move, which must touch the center).
+Dictionary: Every word formed (primary and hooks) must exist in the dictionary.
+Submit Button: Disabled if any formed word is invalid or if the play is disconnected.
+
+SCORING & WIN CONDITIONS
+Scoring Logic:
+Follows standard Scrabble letter and board multiplier rules.
+Dictionary Multiplier: Each individual word score is multiplied by the multiplier value associated with that word in the CSV.
+Total Move Score = Sum of all individual word scores (Score * Multiplier).
+Visual Feedback: The current move's score is displayed in a small circle at the end/bottom of the word string.
+
+Game End:
+Occurs when a player empties their rack and the pool is empty.
+Final Adjustment: The finisher gains the value of all opponents' remaining tiles; opponents subtract their own remaining tile values.
