@@ -172,8 +172,8 @@ $center-star: #ffd700; // Gold
 
 .directionArrow {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: 0px;
+  right: 0px;
   background-color: $accent-blue;
   color: $text-primary;
   border-radius: 50%;
@@ -185,6 +185,7 @@ $center-star: #ffd700; // Gold
   font-size: 12px;
   font-weight: bold;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 10;
 }
 
 .scoreCircle {
@@ -203,6 +204,11 @@ $center-star: #ffd700; // Gold
   font-weight: bold;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   z-index: 10;
+
+  &.invalidPlay {
+    background-color: #dc3545;
+    color: white;
+  }
 }
 
 .scoresSection {

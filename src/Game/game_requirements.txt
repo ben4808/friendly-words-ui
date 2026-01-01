@@ -18,14 +18,20 @@ BOARD & INPUT LOGIC
 Board Grid: 15x15 squares with standard bonus colors (DL, TL, DW, TW).
 
 Interaction:
-Click 1 on a square: Selects square and sets direction to "Across".
-Click 2 on the same square: Toggles direction to "Down".
+Click 1 on a square: Selects square and sets direction to "Across", or the direction of the
+  previously active tile.
+Click 2 on the same square: Toggles direction.
 UI Indicator: A triangular arrow displays at the active square showing direction.
 
 Tile Placement:
 Keyboard: Typing a letter places it if it exists in the rack.
 Click: Clicking a tile in the rack places it into the active board square.
 Auto-advance: The cursor advances in the active direction after a tile is placed.
+
+Backspace:
+If the active square is empty, select the square one space opposite of the selected direction.
+If the active square contains a tile that has been played on the current turn, return that tile to the player's rack and take it off the board. Also perform the action in step one.
+If the active square contains a tile that was not played on the current turn, don't take the tile off the board but still move selection opposite.
 
 Blank Tiles:
 Used automatically if the typed letter is missing from the rack but a blank is available.

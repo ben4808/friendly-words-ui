@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
-import type { GameState, Player, Tile } from './types';
-import { BOARD_SIZE } from './constants';
+import type { GameState } from './types';
+import { BOARD_SIZE, BINGO_BONUS } from './constants';
 import { drawTiles, getTileValue } from './tileUtils';
-import { calculatePlayScore } from './scoring';
+import { calculatePlayScore, type PlayValidationResult } from './scoring';
 
 export const useGameHandlers = (
   gameState: GameState,
@@ -45,6 +45,11 @@ export const useGameHandlers = (
 
       if (!tile) return;
 
+      // Check if square has a pre-existing tile (not played this turn)
+      const existingTile = gameState.board[row][col];
+      const existingCurrentPlayIndex = gameState.currentPlay.findIndex(play => play.row === row && play.col === col);
+      if (existingTile && existingCurrentPlayIndex === -1) return;
+
       setGameState(prev => {
         const newBoard = prev.board.map(boardRow => [...boardRow]);
         newBoard[row][col] = {
@@ -61,23 +66,43 @@ export const useGameHandlers = (
           rack: updatedPlayers[prev.currentPlayerIndex].rack.filter((_, index) => index !== tileIndex)
         };
 
+        let newCurrentPlay = [...prev.currentPlay];
+
+        // If replacing a tile played this turn, return it to rack and remove from current play
+        if (existingTile && existingCurrentPlayIndex !== -1) {
+          const tileToReturn = prev.currentPlay[existingCurrentPlayIndex].tile;
+          updatedPlayers[prev.currentPlayerIndex] = {
+            ...updatedPlayers[prev.currentPlayerIndex],
+            rack: [...updatedPlayers[prev.currentPlayerIndex].rack, tileToReturn]
+          };
+          newCurrentPlay = newCurrentPlay.filter((_, index) => index !== existingCurrentPlayIndex);
+        }
+
         // Add to current play
-        const newCurrentPlay = [...prev.currentPlay, {
+        newCurrentPlay.push({
           row,
           col,
           tile: { letter: tile.letter, value: tile.value },
           isBlank: tile.letter === '' && tile.value === 0
-        }];
+        });
 
-        // Move to next square in direction
+        // Move to next square in direction, skipping pre-existing letters
         let nextSquare = null;
         if (prev.playDirection === 'across') {
-          if (col + 1 < BOARD_SIZE && !newBoard[row][col + 1]) {
-            nextSquare = { row, col: col + 1 };
+          for (let c = col + 1; c < BOARD_SIZE; c++) {
+            const boardTile = newBoard[row][c];
+            if (!boardTile || prev.currentPlay.some(play => play.row === row && play.col === c)) {
+              nextSquare = { row, col: c };
+              break;
+            }
           }
         } else {
-          if (row + 1 < BOARD_SIZE && !newBoard[row + 1][col]) {
-            nextSquare = { row: row + 1, col };
+          for (let r = row + 1; r < BOARD_SIZE; r++) {
+            const boardTile = newBoard[r][col];
+            if (!boardTile || prev.currentPlay.some(play => play.row === r && play.col === col)) {
+              nextSquare = { row: r, col };
+              break;
+            }
           }
         }
 
@@ -102,6 +127,11 @@ export const useGameHandlers = (
 
     if (!tile || tile.letter !== '' || tile.value !== 0) return;
 
+    // Check if square has a pre-existing tile (not played this turn)
+    const existingTile = gameState.board[row][col];
+    const existingCurrentPlayIndex = gameState.currentPlay.findIndex(play => play.row === row && play.col === col);
+    if (existingTile && existingCurrentPlayIndex === -1) return;
+
     setGameState(prev => {
       const newBoard = prev.board.map(boardRow => [...boardRow]);
       newBoard[row][col] = {
@@ -118,23 +148,43 @@ export const useGameHandlers = (
         rack: updatedPlayers[prev.currentPlayerIndex].rack.filter((_, index) => index !== tileIndex)
       };
 
+      let newCurrentPlay = [...prev.currentPlay];
+
+      // If replacing a tile played this turn, return it to rack and remove from current play
+      if (existingTile && existingCurrentPlayIndex !== -1) {
+        const tileToReturn = prev.currentPlay[existingCurrentPlayIndex].tile;
+        updatedPlayers[prev.currentPlayerIndex] = {
+          ...updatedPlayers[prev.currentPlayerIndex],
+          rack: [...updatedPlayers[prev.currentPlayerIndex].rack, tileToReturn]
+        };
+        newCurrentPlay = newCurrentPlay.filter((_, index) => index !== existingCurrentPlayIndex);
+      }
+
       // Add to current play
-      const newCurrentPlay = [...prev.currentPlay, {
+      newCurrentPlay.push({
         row,
         col,
         tile: { letter, value: 0 },
         isBlank: true
-      }];
+      });
 
-      // Move to next square in direction
+      // Move to next square in direction, skipping pre-existing letters
       let nextSquare = null;
       if (prev.playDirection === 'across') {
-        if (col + 1 < BOARD_SIZE && !newBoard[row][col + 1]) {
-          nextSquare = { row, col: col + 1 };
+        for (let c = col + 1; c < BOARD_SIZE; c++) {
+          const boardTile = newBoard[row][c];
+          if (!boardTile || prev.currentPlay.some(play => play.row === row && play.col === c)) {
+            nextSquare = { row, col: c };
+            break;
+          }
         }
       } else {
-        if (row + 1 < BOARD_SIZE && !newBoard[row + 1][col]) {
-          nextSquare = { row: row + 1, col };
+        for (let r = row + 1; r < BOARD_SIZE; r++) {
+          const boardTile = newBoard[r][col];
+          if (!boardTile || prev.currentPlay.some(play => play.row === r && play.col === col)) {
+            nextSquare = { row: r, col };
+            break;
+          }
         }
       }
 
@@ -246,6 +296,12 @@ export const useGameHandlers = (
     });
   }, [gameState.gamePhase]);
 
+  const isPlayValid = useCallback((): boolean => {
+    if (gameState.currentPlay.length === 0) return false;
+    const validationResult = calculatePlayScore(gameState.board, gameState.currentPlay, gameState.dictionary);
+    return validationResult.isValid;
+  }, [gameState.board, gameState.currentPlay, gameState.dictionary]);
+
   const handleSubmit = useCallback(() => {
     if (gameState.gamePhase !== 'playing') return;
 
@@ -254,19 +310,23 @@ export const useGameHandlers = (
     } else {
       if (gameState.currentPlay.length === 0) return;
 
-      const score = calculatePlayScore(gameState.board, gameState.currentPlay, gameState.dictionary);
+      const validationResult: PlayValidationResult = calculatePlayScore(gameState.board, gameState.currentPlay, gameState.dictionary);
 
-      if (score === 0) {
+      if (!validationResult.isValid) {
         // Invalid play - could show error message
+        console.log('Invalid play:', validationResult.invalidReason);
         return;
       }
 
       setGameState(prev => {
+        // Check for bingo bonus (using all tiles from rack)
+        const bingoBonus = (prev.players[prev.currentPlayerIndex].rack.length === 0) ? BINGO_BONUS : 0;
+
         // Update player score
         const updatedPlayers = [...prev.players];
         updatedPlayers[prev.currentPlayerIndex] = {
           ...updatedPlayers[prev.currentPlayerIndex],
-          score: updatedPlayers[prev.currentPlayerIndex].score + score
+          score: updatedPlayers[prev.currentPlayerIndex].score + validationResult.score + bingoBonus
         };
 
         // Check for game end condition: player emptied rack and pool is empty
@@ -339,7 +399,8 @@ export const useGameHandlers = (
     handleExchange,
     handleExchangeSubmit,
     handleReady,
-    handleSubmit
+    handleSubmit,
+    isPlayValid
   };
 };
 
@@ -350,22 +411,87 @@ export const useKeyboardInput = (
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
     if (gameState.gamePhase !== 'playing' || !gameState.selectedSquare) return;
 
-    const key = event.key.toUpperCase();
-    if (key.length === 1 && key >= 'A' && key <= 'Z') {
+    const key = event.key;
+    const keyUpper = key.toUpperCase();
+
+    if (key === 'Backspace') {
+      const { row, col } = gameState.selectedSquare;
+      const boardTile = gameState.board[row][col];
+      const currentPlayTileIndex = gameState.currentPlay.findIndex(play => play.row === row && play.col === col);
+
+      // Determine next square in opposite direction, skipping pre-existing letters
+      let nextSquare = null;
+      if (gameState.playDirection === 'across') {
+        for (let c = col - 1; c >= 0; c--) {
+          const tile = gameState.board[row][c];
+          if (!tile || gameState.currentPlay.some(play => play.row === row && play.col === c)) {
+            nextSquare = { row, col: c };
+            break;
+          }
+        }
+      } else {
+        for (let r = row - 1; r >= 0; r--) {
+          const tile = gameState.board[r][col];
+          if (!tile || gameState.currentPlay.some(play => play.row === r && play.col === col)) {
+            nextSquare = { row: r, col };
+            break;
+          }
+        }
+      }
+
+      if (boardTile && currentPlayTileIndex !== -1) {
+        // Square has a tile played this turn - remove it
+        setGameState(prev => {
+          const newBoard = prev.board.map(boardRow => [...boardRow]);
+          newBoard[row][col] = null;
+
+          // Add tile back to player's rack
+          const updatedPlayers = [...prev.players];
+          const tileToReturn = prev.currentPlay[currentPlayTileIndex].tile;
+          updatedPlayers[prev.currentPlayerIndex] = {
+            ...updatedPlayers[prev.currentPlayerIndex],
+            rack: [...updatedPlayers[prev.currentPlayerIndex].rack, tileToReturn]
+          };
+
+          // Remove from current play
+          const newCurrentPlay = prev.currentPlay.filter((_, index) => index !== currentPlayTileIndex);
+
+          return {
+            ...prev,
+            board: newBoard,
+            players: updatedPlayers,
+            currentPlay: newCurrentPlay,
+            selectedSquare: nextSquare
+          };
+        });
+      } else {
+        // Square is empty or has a tile not played this turn - just move selection
+        setGameState(prev => ({
+          ...prev,
+          selectedSquare: nextSquare
+        }));
+      }
+    } else if (keyUpper.length === 1 && keyUpper >= 'A' && keyUpper <= 'Z') {
       // Find tile in rack
       const playerRack = gameState.players[gameState.currentPlayerIndex].rack;
-      const tileIndex = playerRack.findIndex(tile => tile.letter === key || (tile.letter === '' && tile.value === 0));
+      const tileIndex = playerRack.findIndex(tile => tile.letter === keyUpper || (tile.letter === '' && tile.value === 0));
 
       if (tileIndex !== -1) {
         // Place tile on board
         const { row, col } = gameState.selectedSquare;
+        const existingTile = gameState.board[row][col];
+        const existingCurrentPlayIndex = gameState.currentPlay.findIndex(play => play.row === row && play.col === col);
+
+        // Check if square has a pre-existing tile (not played this turn)
+        if (existingTile && existingCurrentPlayIndex === -1) return;
+
         const isBlank = playerRack[tileIndex].letter === '' && playerRack[tileIndex].value === 0;
 
         setGameState(prev => {
           const newBoard = prev.board.map(boardRow => [...boardRow]);
           newBoard[row][col] = {
-            letter: key,
-            value: isBlank ? 0 : getTileValue(key),
+            letter: keyUpper,
+            value: isBlank ? 0 : getTileValue(keyUpper),
             isBlank,
             playedBy: prev.currentPlayerIndex
           };
@@ -377,23 +503,43 @@ export const useKeyboardInput = (
             rack: updatedPlayers[prev.currentPlayerIndex].rack.filter((_, index) => index !== tileIndex)
           };
 
-          // Add to current play
-          const newCurrentPlay = [...prev.currentPlay, {
+          let newCurrentPlay = [...prev.currentPlay];
+
+          // If replacing a tile played this turn, return it to rack and remove from current play
+          if (existingTile && existingCurrentPlayIndex !== -1) {
+            const tileToReturn = prev.currentPlay[existingCurrentPlayIndex].tile;
+            updatedPlayers[prev.currentPlayerIndex] = {
+              ...updatedPlayers[prev.currentPlayerIndex],
+              rack: [...updatedPlayers[prev.currentPlayerIndex].rack, tileToReturn]
+            };
+            newCurrentPlay = newCurrentPlay.filter((_, index) => index !== existingCurrentPlayIndex);
+          }
+
+          // Add new tile to current play
+          newCurrentPlay.push({
             row,
             col,
-            tile: { letter: key, value: isBlank ? 0 : getTileValue(key) },
+            tile: { letter: keyUpper, value: isBlank ? 0 : getTileValue(keyUpper) },
             isBlank
-          }];
+          });
 
-          // Move to next square in direction
+          // Move to next square in direction, skipping pre-existing letters
           let nextSquare = null;
           if (prev.playDirection === 'across') {
-            if (col + 1 < BOARD_SIZE && !newBoard[row][col + 1]) {
-              nextSquare = { row, col: col + 1 };
+            for (let c = col + 1; c < BOARD_SIZE; c++) {
+              const tile = newBoard[row][c];
+              if (!tile || prev.currentPlay.some(play => play.row === row && play.col === c)) {
+                nextSquare = { row, col: c };
+                break;
+              }
             }
           } else {
-            if (row + 1 < BOARD_SIZE && !newBoard[row + 1][col]) {
-              nextSquare = { row: row + 1, col };
+            for (let r = row + 1; r < BOARD_SIZE; r++) {
+              const tile = newBoard[r][col];
+              if (!tile || prev.currentPlay.some(play => play.row === r && play.col === col)) {
+                nextSquare = { row: r, col };
+                break;
+              }
             }
           }
 
@@ -429,11 +575,10 @@ export const useSquareSelection = (
           playDirection: prev.playDirection === 'across' ? 'down' : 'across'
         };
       } else {
-        // Select new square
+        // Select new square - keep current direction
         return {
           ...prev,
-          selectedSquare: { row, col },
-          playDirection: 'across' // Default to across when selecting new square
+          selectedSquare: { row, col }
         };
       }
     });

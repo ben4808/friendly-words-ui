@@ -10,8 +10,8 @@ interface BoardProps {
 }
 
 const Board: React.FC<BoardProps> = ({ gameState, onSquareClick }) => {
-  const currentPlayScore = gameState.currentPlay.length > 0 ?
-    calculatePlayScore(gameState.board, gameState.currentPlay, gameState.dictionary) : 0;
+  const currentPlayResult = gameState.currentPlay.length > 0 ?
+    calculatePlayScore(gameState.board, gameState.currentPlay, gameState.dictionary) : null;
 
   const renderBoard = () => {
     const squares = [];
@@ -56,9 +56,9 @@ const Board: React.FC<BoardProps> = ({ gameState, onSquareClick }) => {
               </div>
             )}
             {/* Score display positioned at bottom-right of play area */}
-            {row === maxRow && col === maxCol && gameState.currentPlay.length > 0 && currentPlayScore > 0 && (
-              <div className={styles.scoreCircle}>
-                {currentPlayScore}
+            {row === maxRow && col === maxCol && gameState.currentPlay.length > 0 && currentPlayResult && (
+              <div className={`${styles.scoreCircle} ${!currentPlayResult.isValid ? styles.invalidPlay : ''}`}>
+                {currentPlayResult.isValid ? currentPlayResult.score : '✗'}
               </div>
             )}
           </div>

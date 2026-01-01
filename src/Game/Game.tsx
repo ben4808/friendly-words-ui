@@ -49,7 +49,8 @@ const Game: React.FC<GameProps> = ({ players }) => {
     handleBlankCancel,
     handleExchange,
     handleReady,
-    handleSubmit
+    handleSubmit,
+    isPlayValid
   } = useGameHandlers(gameState, setGameState);
 
   const handleKeyPress = useKeyboardInput(gameState, setGameState);
@@ -123,7 +124,7 @@ const Game: React.FC<GameProps> = ({ players }) => {
               <button
                 className={styles.submitButton}
                 onClick={handleSubmit}
-                disabled={gameState.exchangeMode ? gameState.tilesToExchange.length === 0 : gameState.currentPlay.length === 0}
+                disabled={gameState.exchangeMode ? gameState.tilesToExchange.length === 0 : !isPlayValid()}
               >
                 {gameState.exchangeMode ? 'Exchange' : 'Submit'}
               </button>
